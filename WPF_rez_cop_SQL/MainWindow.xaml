@@ -1,0 +1,89 @@
+﻿<Window x:Class="WPF_rez_cop_SQL.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPF_rez_cop_SQL"
+        mc:Ignorable="d"
+        Title="Резервное копирование SQL Server" 
+        Height="580" Width="600">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Резервное копирование базы данных"
+                   FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+        
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Аутентификация:" Width="100" VerticalAlignment="Center"/>
+            <ComboBox x:Name="cmbAuthType" Width="200" SelectedIndex="0" SelectionChanged="CmbAutoType_SelectionChanged">
+                <ComboBoxItem Content="Windows"/>
+                <ComboBoxItem Content="SQL Server"/>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Сервер:" Width="100" VerticalAlignment="Center"/>
+            <TextBox x:Name="txtServer" Text="localhost" Width="200"/>
+        </StackPanel>
+
+        <StackPanel x:Name="pnlLogin" Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10" Visibility="Collapsed">
+            <TextBlock Text="Логин:" Width='100' VerticalAlignment="Center"/>
+            <TextBox x:Name="txtLogin" Width="200"/>
+        </StackPanel>
+
+        <StackPanel x:Name="pnlPassword" Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,10" Visibility="Collapsed">
+            <TextBlock Text="Пароль:" Width='100' VerticalAlignment="Center"/>
+            <TextBox x:Name="txtPassword" Width="200"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="База данных:" Width="100" VerticalAlignment="Center"/>
+            <TextBox x:Name="txtDatabase" Text="TestDB" Width="100"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Тип копии:" Width="100" VerticalAlignment="Center"/>
+            <ComboBox x:Name="cmbBackupType" Width="200" SelectedIndex="0">
+                <ComboBoxItem Content="Полная (FULL)"/>
+                <ComboBoxItem Content="Раздностная (DIFFERENTIAL)"/>
+                <ComboBoxItem Content="Журнал транзакций (LOG)"/>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Grid.Row="7" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Путь для сохранения:" Width="123" VerticalAlignment="Center" Margin="0,2"/>
+            <TextBox x:Name="txtBackupPath" Text="C:\Backups\" Width="301"/>
+            <Button x:Name="btnBrowse" Content="..." Width="30" Margin="5,0,0,0" Click="BtnBrowse_Click"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="8" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Имя файла:" Width="100" VerticalAlignment="Center"/>
+            <TextBox x:Name="txtFileName" Text="Backup.bak" Width="300"/>
+        </StackPanel>
+
+        <GroupBox Grid.Row="9" Header="Лог выполнения" Margin="0,10,0,10">
+            <TextBox x:Name="txtLog" IsReadOnly="True"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     TextWrapping="Wrap" Height="150"/>
+        </GroupBox>
+
+        <StackPanel Grid.Row="10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <Button x:Name="btnTestConnection" Content="Проверить подключение"
+                    Width="150" Height="30" Margin="0,0,10,0" Click="BtnTestConnection_Click"/>
+            <Button x:Name="btnBackup" Content="Выполнить резервное копирование"
+                    Width="200" Height="30" Margin="0,0,10,0" Click="BtnBackup_Click"/>
+            <Button x:Name="btnClose" Content="Закрыть"
+                    Width="100" Height="30" Click="BtnClose_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
