@@ -4,11 +4,11 @@
 winexe
 C#
 .cs
-F:\MDK\WPF_rez_cop_SQL\WPF_rez_cop_SQL\obj\Debug\
+F:\MDK\WPF_rez_cop_SQL\WPF_rez_cop_SQL\obj\Release\
 WPF_rez_cop_SQL
 none
 false
-DEBUG;TRACE
+TRACE
 F:\MDK\WPF_rez_cop_SQL\WPF_rez_cop_SQL\App.xaml
 1219584333
 
