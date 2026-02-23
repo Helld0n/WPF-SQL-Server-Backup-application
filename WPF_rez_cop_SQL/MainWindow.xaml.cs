@@ -1,6 +1,15 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel.Design;
+using System.Data.Common;
+using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,11 +21,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Data.SqlClient;
-using System.IO;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using System.Runtime.CompilerServices;
 
 namespace WPF_rez_cop_SQL
 {
@@ -99,6 +103,114 @@ namespace WPF_rez_cop_SQL
             }
 
             return builder.ConnectionString;
+        }
+        private void BtnBackup_Click(object sender, System.EventArgs e)
+        {
+            try
+            {
+                string server = txtServer.Text.Trim();
+                string database = txtDatabase.Text.Trim();
+                string backupType = ((System.Windows.Controls.ComboBoxItem)cmbBackupType.SelectedItem).Content.ToString();
+                string backupPath = txtBackupPath.Text.Trim();
+                string fileName = txtFileName.Text.Trim();
+
+                if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(database))
+                {
+                    MessageBox.Show("Заполните поля 'Сервер' и 'База данных'", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (cmbAuthType.SelectedIndex == 1) // SQL Server
+                {
+                    string login = txtLogin.Text.Trim();
+                    if (string.IsNullOrEmpty(login))
+                    {
+                        MessageBox.Show("Введите логин для SQL Server аутентификации", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                }
+                string fullPath = System.IO.Path.Combine(backupPath, fileName);
+
+                if (!System.IO.Directory.Exists(backupPath))
+                {
+                    try
+                    {
+                        System.IO.Directory.CreateDirectory(backupPath);
+                        AddLog($"Создана папка: {backupPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Не удалось создать папку: {ex.Message}", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                }
+                AddLog($"Начинается резервное копирование…");
+                AddLog($"Сервер: {server}");
+                AddLog($"База данных: {database}");
+                AddLog($"Тип копии: {backupType}");
+                AddLog($"Путь: {fullPath}");
+
+                string sqlCommand = "";
+
+                if (backupType.Contains("Полная"))
+                {
+                    sqlCommand = $"BACKUP DATABASE [{database}] TO DISK = '{fullPath}' WITH FORMAT, INIT, NAME = 'Full Backup of {database}'";
+                }
+                else if (backupType.Contains("Разностная"))
+                {
+                    sqlCommand = $"BACKUP DATABASE [{database}] TO DISK = '{fullPath}' WITH DIFFERENTIAL, FORMAT, INIT, NAME = 'Differential Backup of {database}'";
+                }
+                else if (backupType.Contains("Журнал"))
+                {
+                    sqlCommand = $"BACKUP LOG [{database}] TO DISK = '{fullPath}' WITH FORMAT, INIT, NAME = 'Transaction Log Backup of {database}'";
+                }
+
+                string connectionString = GetConnectionString();
+
+                AddLog("Подключение к серверу...");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    AddLog("Подключение установлено");
+
+                    using (SqlCommand command = new SqlCommand(sqlCommand, connection))
+                    {
+                        command.CommandTimeout = 300;
+                        command.ExecuteNonQuery();
+                    }
+
+                    connection.Close();
+                }
+
+                AddLog("Резервное копирование успешно завершено!");
+                AddLog($"Файл создан: {fullPath}");
+
+                if (File.Exists(fullPath))
+                {
+                    FileInfo fileInfo = new FileInfo(fullPath);
+                    double sizeMB = fileInfo.Length / (1024.0 * 1024.0);
+                    AddLog($"Размер файла: {sizeMB:F2} МБ");
+                }
+                MessageBox.Show("Резервное копирование успешно завершено!", "Успех",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+            catch (SqlException sqlEx)
+            {
+                AddLog($" Ошибка SQL Server: {sqlEx.Message}");
+                MessageBox.Show($"Ошибка SQL Server: {sqlEx.Message}", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                AddLog($" Ошибка: {ex.Message}");
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }
