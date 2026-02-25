@@ -11,6 +11,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -67,7 +68,7 @@ namespace WPF_rez_cop_SQL
         }
         private void CmbAuthType_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (pnlLogin != null || pnlPassword != null)
+            if (pnlLogin == null || pnlPassword == null)
                 return;
 
             if (cmbAuthType.SelectedIndex == 1)
@@ -210,6 +211,128 @@ namespace WPF_rez_cop_SQL
                 AddLog($" Ошибка: {ex.Message}");
                 MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void BtnTestConnection_Click(object sender, RoutedEventArgs e)
+        {
+            string server = txtServer.Text.Trim();
+
+            if (string.IsNullOrEmpty(server))
+            {
+                MessageBox.Show("Введите имя сервера", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            try
+            {
+                string connectionString;
+
+                if (cmbAuthType.SelectedIndex == 0) // Windows
+                {
+                    connectionString = $"Server={server};Trusted_Connection=True;Connection Timeout=5";
+                }
+                else // SQL Server
+                {
+                    string login = txtLogin.Text.Trim();
+                    string password = txtPassword.Text;
+
+                    if (string.IsNullOrEmpty(login))
+                    {
+                        MessageBox.Show("Введите логин для SQL Server аутентификации", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    connectionString = $"Server={server};User ID={login};Password={password};Connection Timeout = 5";
+                }
+
+                AddLog("Проверка подключения...");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+
+                    string query = "SELECT name FROM sys.databases WHERE database_id > 4 ORDER BY name";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        int dbCount = 0;
+                        while (reader.Read())
+                        {
+                            dbCount++;
+                        }
+                        AddLog($" Подключение успешно! Найдено баз данных: {dbCount}");
+
+                        string database = txtDatabase.Text.Trim();
+                        if (!string.IsNullOrEmpty(database))
+                        {
+                            connection.Close();
+                            connection.Open();
+
+                            string checkDbQuery = $"SELECT COUNT(*) FROM sys.databases WHERE name = '{database}'";
+                            using (SqlCommand checkCommand = new SqlCommand(checkDbQuery, connection))
+                            {
+                                int exists = (int)checkCommand.ExecuteScalar();
+                                if (exists > 0)
+                                {
+                                    AddLog($" База данных '{database}' найдена");
+                                }
+                                else
+                                {
+                                    AddLog($" База данных '{database}' не найдена");
+                                }
+                            }
+                        }
+                    }
+
+                    connection.Close();
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                AddLog($" Ошибка SQL Server: {sqlEx.Message}");
+                MessageBox.Show($"Ошибка подключения: {sqlEx.Message}", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                AddLog($" Ошибка: {ex.Message}");
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        public class AppSettings
+        {
+            public string ServerName { get; set; } = "localhost";
+            public string LastDatabase { get; set; } = "";
+            public string BackupPath { get; set; } = "C:\\Backups\\";
+            public void Save()
+            {
+                try
+                {
+                    string json = JsonConvert.SerializeObject(this);
+                    File.WriteAllText("settings.json", json);
+                }
+                catch
+                {
+
+                }
+            }
+            public static AppSettings Load()
+            {
+                try
+                {
+                    if (File.Exists("settings.json"))
+                    {
+                        string json = File.ReadAllText("settings.json");
+                        return JsonConvert.DeserializeObject<AppSettings>(json);
+                    }
+                }
+                catch
+                {
+
+                }
+                return new AppSettings();
             }
         }
     }
